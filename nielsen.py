@@ -224,11 +224,10 @@ def strip_identities(F, word):
     If the word equals the identity, the identity in `F` will be returned.
 
     """
-    new_symbols = reduce(op.add, (c for c in word if c != F.identity))
-    if len(new_symbols) == 0:
+    filtered = [c for c in word if c != F.identity]
+    if len(filtered) == 0:
         return F.identity
-    print('returning', new_symbols)
-    return new_symbols
+    return reduce(op.add, filtered)
 
 
 # TODO the reference for this is String matching and algorithmic problems in
