@@ -96,12 +96,19 @@ class FreeGroup:
         """Returns the inverse of `word` as an instance of :class:`Word`."""
         if len(word) == 1:
             return self._inverses[word]
-        return sum(self.inverse(self._generators_by_label[x.label])
-                   for x in reversed(word))
+        return reduce(op.add, (self.inverse(x) for x in reversed(word)))
 
     def power(self, word, exp):
         """Returns the :class:`Word` which results from raising `word` to the
         `exp` power.
+
+        Technical note: this is an abuse of convention in the sense that we are
+        using additive notation to denote string concatenation (that is, by
+        implementing the :meth:`Word.__add__` method). Under additive notation,
+        this "power" operation should really be denoted multiplicatively.
+        However, we choose to use this name because the inverse of a word *w*
+        is denoted with exponents, and this method will be used primarily for
+        computing inverses.
 
         """
         if exp < 0:
@@ -150,7 +157,11 @@ class Word:
         return '<Word {}>'.format(repr(self._word))
 
     def __str__(self):
-        return '<Word {}>'.format(str(self._word))
+        """Returns the concatenation of the labels of each of the component
+        symbols of this word.
+
+        """
+        return ''.join(self._word)
 
     def __add__(self, other):
         """Returns the concatenation of this word with `other`.
@@ -168,7 +179,7 @@ class Word:
         return self._word != other._word
 
     def __hash__(self):
-        return hash(''.join(self._word))
+        return hash(str(self))
 
     def __len__(self):
         return len(self._word)
@@ -180,7 +191,7 @@ class Word:
         return iter(Word(c) for c in self._word)
 
     def __reversed__(self):
-        return reversed(self._word)
+        return Word(self._word[::-1])
 
     @property
     def label(self):
@@ -196,14 +207,18 @@ class Word:
     def startswith(self, prefix):
         """Returns ``True`` if and only if `prefix` is a prefix of this word.
 
+        `prefix` must be an instance of :class:`Word`.
+
         """
-        return ''.join(self._word).startswith(prefix)
+        return str(self).startswith(str(prefix))
 
     def endswith(self, suffix):
         """Returns ``True`` if and only if `suffix` is a suffix of this word.
 
+        `suffix` must be an instance of :class:`Word`.
+
         """
-        return ''.join(self._word).endswith(suffix)
+        return str(self).endswith(str(suffix))
 
 
 def halves(word):

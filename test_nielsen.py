@@ -21,6 +21,7 @@
 """
 from nielsen import FreeGroup
 from nielsen import freely_reduced
+from nielsen import halves
 from nielsen import strip_identities
 from nielsen import Word
 
@@ -76,3 +77,56 @@ def test_freely_reduced():
     assert freely_reduced(F, a + b + b_inv + a_inv) == identity
     assert freely_reduced(F, a + a + b + b_inv + a_inv) == a
     assert freely_reduced(F, a + e + b) == a + b
+
+
+def test_missing_identity():
+    generators = frozenset(Word(c) for c in 'abcd')
+    e = identity = Word('e')
+    F = FreeGroup(generators, identity)
+    assert e == F.identity
+    assert F.inverse(e) == e
+
+
+def test_inverse():
+    a, b, c, e = (Word(c) for c in 'abce')
+    F = FreeGroup({a, b, c, e}, e)
+    abc = a + b + c
+    abc_inv = F.inverse(abc)
+    assert freely_reduced(F, abc + abc_inv) == e
+
+
+def test_power():
+    a, b, c, e = (Word(c) for c in 'abce')
+    F = FreeGroup({a, b, c, e}, e)
+    for x in (a, b, c, e):
+        assert F.power(x, 0) == e
+        assert F.power(x, 1) == x
+        assert freely_reduced(F, x + F.power(x, -1)) == e
+        assert F.power(x, 2) == x + x
+        assert F.power(x, 3) == x + x + x
+
+
+def test_starts_and_ends_with():
+    a, b, c = (Word(c) for c in 'abc')
+    abc = a + b + c
+    assert abc.startswith(a + b)
+    assert not abc.endswith(a + b)
+    assert abc.endswith(b + c)
+    assert not abc.startswith(b + c)
+
+
+def test_halves():
+    a, b = Word('a'), Word('b')
+    ab, ba = a + b, b + a
+    l, r = halves(ab + ba)
+    assert l == ab
+    assert r == ba
+
+
+def test_nielsen_reduced():
+    a, b, c, d, e = (Word(c) for c in 'abcde')
+    F = FreeGroup({a, b, c, d, e}, e)
+    # TODO Here put some example set, U, with a known Nielsen reduced form, V.
+    #U = {a + b + c, a + F.inverse(b) + c + F.inverse(b), c + c + F.inverse(a)}
+    #V = nielsen_reduced(F, U)
+    #assert generates(V, U)
