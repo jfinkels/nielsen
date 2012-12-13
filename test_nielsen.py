@@ -44,9 +44,6 @@ def test_add():
 
 
 def test_length():
-    generators = frozenset(Word(c) for c in 'abe')
-    identity = Word('e')
-    F = FreeGroup(generators, identity)
     assert len(Word('a')) == 1
     assert len(Word('a') + Word('b')) == 2
 
