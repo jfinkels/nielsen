@@ -26,6 +26,13 @@ from nielsen import strip_identities
 from nielsen import Word
 
 
+def test_repr():
+    q = Word('q')
+    assert 'q' in repr(q)
+    F = FreeGroup({q}, q)
+    assert 'q' in repr(F)
+
+
 def test_equality():
     assert Word('a') == Word('a')
     assert Word('a') != Word('b')
