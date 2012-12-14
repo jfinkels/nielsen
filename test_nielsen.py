@@ -128,9 +128,10 @@ def test_halves():
 
 
 def test_nielsen_reduced():
-    a, b, c, d, e = (Word(c) for c in 'abcde')
-    F = FreeGroup({a, b, c, d, e}, e)
-    # TODO Here put some example set, U, with a known Nielsen reduced form, V.
-    #U = {a + b + c, a + F.inverse(b) + c + F.inverse(b), c + c + F.inverse(a)}
+    a, b, e = (Word(c) for c in 'abe')
+    F = FreeGroup({a, b, e}, e)
+    # Source of this example:
+    # http://www-users.math.umd.edu/~rfhoban/Graph_Foldings/GraphFoldings.html
+    #U = {a + a + a + b, F.inverse(a) + b + a + b, a + a + F.inverse(b) + a}
     #V = nielsen_reduced(F, U)
-    #assert generates(V, U)
+    #assert equals(V, U)
