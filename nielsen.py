@@ -98,6 +98,7 @@ class FreeGroup:
             return self._inverses[word]
         return reduce(op.add, (self.inverse(x) for x in reversed(word)))
 
+    # TODO figure out the best way to use the built-in __pow__ method on Words
     def power(self, word, exp):
         """Returns the :class:`Word` which results from raising `word` to the
         `exp` power.
@@ -171,6 +172,12 @@ class Word:
 
         """
         return Word(self._word + other._word)
+
+    def __mul__(self, other):
+        return Word(self._word * other)
+
+    def __rmul__(self, other):
+        return self * other
 
     def __eq__(self, other):
         return self._word == other._word

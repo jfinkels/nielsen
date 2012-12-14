@@ -135,3 +135,8 @@ def test_nielsen_reduced():
     #U = {a + a + a + b, F.inverse(a) + b + a + b, a + a + F.inverse(b) + a}
     #V = nielsen_reduced(F, U)
     #assert equals(V, U)
+
+
+def test_multiply():
+    a = Word('a')
+    assert 3 * a == a * 3 == a + a + a
