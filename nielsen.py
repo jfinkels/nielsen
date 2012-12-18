@@ -252,12 +252,6 @@ def strip_identities(F, word):
     return reduce(op.add, filtered)
 
 
-# TODO the reference for this is String matching and algorithmic problems in
-# free groups by J. Avenhaus and K. Madlener in Revista Colombiana de
-# Matematicas, Volume 14, Issue 1, 1980:
-# http://www.scm.org.co/aplicaciones/revista/revistas.php?modulo=MasInformacion&ver=412
-#
-# That reference has a more efficient algorithm, but it is hard to obtain.
 def freely_reduced(F, word):
     """Returns a new :class:`Word` instance which represents the freely reduced
     word which is equivalent to `word` in the free group `F`.
@@ -266,18 +260,21 @@ def freely_reduced(F, word):
     freely reduced word *v* such that *w* is equivalent to *v* (in the sense of
     cancelling adjacent inverses).
 
+    Implementation note: the linear time implementation here is adapted from
+    the one given in "String matching and algorithmic problems in free groups"
+    by J. Avenhaus and K. Madlener in Revista Colombiana de Matematicas, Volume
+    14, Issue 1, 1980.
+
     """
-    modified = True
-    while modified:
-        modified = False
-        for i in range(len(word) - 1):
-            if F.inverse(word[i]) == word[i + 1]:
-                word = word[:i] + word[i + 2:]
-                modified = True
-                break
-    if len(word) == 0:
-        return F.identity
-    return strip_identities(F, word)
+    z = []
+    for c in word:
+        if c == F.identity:
+            continue
+        if len(z) == 0 or F.inverse(c) != z[-1]:
+            z.append(c)
+        else:
+            z.pop()
+    return reduce(op.add, z) if len(z) > 0 else F.identity
 
 
 def nielsen_reduced(F, U):
