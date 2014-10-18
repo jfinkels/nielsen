@@ -1,34 +1,7 @@
-# nielsen.py - implementation of the Nielsen reduction for free groups
-#
-# Copyright 2012 Jeffrey Finkelstein
-#
-# This program is free software: you can redistribute it and/or modify it under
-# the terms of the GNU General Public License as published by the Free Software
-# Foundation, either version 3 of the License, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but WITHOUT
-# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
-# details.
-#
-# You should have received a copy of the GNU General Public License along with
-# this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Provides an implementation of the Nielsen reduction for free groups.
-
-The implementation is adapted from the pseudocode given in `The Nielsen
-Reduction and P-Complete Problems in Free Groups`__.
-
-.. codeauthor:: Jeffrey Finkelstein <jeffrey.finkelstein@gmail.com>
-
-.. nielsen_: http://dx.doi.org/10.1016/0304-3975(84)90024-0
-
-__ nielsen_
-
-"""
-from functools import reduce
+# reference: The Nielsen Reduction and P-complete Problems in Free Groups, by
+# J. Avenhaus and K. Madlener, in Theoretical Computer Science, volume 32, year
+# 1984, pages 61-76, Elsevier Science Publishers B.V. (North-Holland)
 import itertools
-import operator as op
 
 
 class FreeGroup:
@@ -60,10 +33,10 @@ class FreeGroup:
         if self._identity not in self.generators:
             self.generators |= frozenset((self._identity, ))
         self._generate_inverses()
-        self._generators_by_label = {x.label: x for x in self._inverses}
+        self._elements_by_label = {x.label: x for x in self._inverses}
 
     def __repr__(self):
-        return '<Group {}>'.format(repr(self.generators))
+        return '<Group {}>'.format(repr(self.elements))
 
     def _generate_inverses(self):
         """Creates one group element for each inverse and assigns mappings from
@@ -96,26 +69,18 @@ class FreeGroup:
         """Returns the inverse of `word` as an instance of :class:`Word`."""
         if len(word) == 1:
             return self._inverses[word]
-        return reduce(op.add, (self.inverse(x) for x in reversed(word)))
+        return sum(self.inverse(self._elements_by_label[x.label])
+                   for x in reversed(word))
 
-    # TODO figure out the best way to use the built-in __pow__ method on Words
     def power(self, word, exp):
         """Returns the :class:`Word` which results from raising `word` to the
         `exp` power.
-
-        Technical note: this is an abuse of convention in the sense that we are
-        using additive notation to denote string concatenation (that is, by
-        implementing the :meth:`Word.__add__` method). Under additive notation,
-        this "power" operation should really be denoted multiplicatively.
-        However, we choose to use this name because the inverse of a word *w*
-        is denoted with exponents, and this method will be used primarily for
-        computing inverses.
 
         """
         if exp < 0:
             return self.power(self.inverse(word), -exp)
         if exp == 0:
-            return self.identity
+            return self.identity()
         if exp == 1:
             return word
         half = exp // 2
@@ -124,8 +89,6 @@ class FreeGroup:
 
 class Word:
     """Represents a (not necessarily freely reduced) word in a free group.
-
-    Instances of this class are immutable.
 
     The free group structure is given entirely by an instance of
     :class:`FreeGroup` which contains the underlying set of the free group
@@ -158,11 +121,7 @@ class Word:
         return '<Word {}>'.format(repr(self._word))
 
     def __str__(self):
-        """Returns the concatenation of the labels of each of the component
-        symbols of this word.
-
-        """
-        return ''.join(self._word)
+        return str(self._word)
 
     def __add__(self, other):
         """Returns the concatenation of this word with `other`.
@@ -173,12 +132,6 @@ class Word:
         """
         return Word(self._word + other._word)
 
-    def __mul__(self, other):
-        return Word(self._word * other)
-
-    def __rmul__(self, other):
-        return self * other
-
     def __eq__(self, other):
         return self._word == other._word
 
@@ -186,7 +139,7 @@ class Word:
         return self._word != other._word
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(''.join(self._word))
 
     def __len__(self):
         return len(self._word)
@@ -195,10 +148,10 @@ class Word:
         return Word(self._word[key])
 
     def __iter__(self):
-        return iter(Word(c) for c in self._word)
+        return iter(self._word)
 
     def __reversed__(self):
-        return Word(self._word[::-1])
+        return reversed(self._word)
 
     @property
     def label(self):
@@ -214,18 +167,14 @@ class Word:
     def startswith(self, prefix):
         """Returns ``True`` if and only if `prefix` is a prefix of this word.
 
-        `prefix` must be an instance of :class:`Word`.
-
         """
-        return str(self).startswith(str(prefix))
+        return ''.join(self._word).startswith(prefix)
 
     def endswith(self, suffix):
         """Returns ``True`` if and only if `suffix` is a suffix of this word.
 
-        `suffix` must be an instance of :class:`Word`.
-
         """
-        return str(self).endswith(str(suffix))
+        return ''.join(self._word).endswith(suffix)
 
 
 def halves(word):
@@ -237,21 +186,14 @@ def halves(word):
     """
     midpoint = len(word) // 2
     return (word[:midpoint], word[midpoint:])
-    
-
-def strip_identities(F, word):
-    """Returns a new word equivalent to `word` but with superfluous identities
-    removed.
-
-    If the word equals the identity, the identity in `F` will be returned.
-
-    """
-    filtered = [c for c in word if c != F.identity]
-    if len(filtered) == 0:
-        return F.identity
-    return reduce(op.add, filtered)
 
 
+# TODO the reference for this is String matching and algorithmic problems in
+# free groups by J. Avenhaus and K. Madlener in Revista Colombiana de
+# Matematicas, Volume 14, Issue 1, 1980:
+# http://www.scm.org.co/aplicaciones/revista/revistas.php?modulo=MasInformacion&ver=412
+#
+# That reference has a more efficient algorithm, but it is hard to obtain.
 def freely_reduced(F, word):
     """Returns a new :class:`Word` instance which represents the freely reduced
     word which is equivalent to `word` in the free group `F`.
@@ -260,21 +202,18 @@ def freely_reduced(F, word):
     freely reduced word *v* such that *w* is equivalent to *v* (in the sense of
     cancelling adjacent inverses).
 
-    Implementation note: the linear time implementation here is adapted from
-    the one given in "String matching and algorithmic problems in free groups"
-    by J. Avenhaus and K. Madlener in Revista Colombiana de Matematicas, Volume
-    14, Issue 1, 1980.
-
     """
-    z = []
-    for c in word:
-        if c == F.identity:
-            continue
-        if len(z) == 0 or F.inverse(c) != z[-1]:
-            z.append(c)
-        else:
-            z.pop()
-    return reduce(op.add, z) if len(z) > 0 else F.identity
+    modified = True
+    while modified:
+        modified = False
+        for i in range(len(word) - 1):
+            if F.inverse(word[i]) == word[i + 1]:
+                word = word[:i] + word[i + 2:]
+                modified = True
+                break
+    if len(word) == 0:
+        return F.identity()
+    return word
 
 
 def nielsen_reduced(F, U):
@@ -302,7 +241,7 @@ def nielsen_reduced(F, U):
     # The set `V` will eventually contain the Nielsen reduced set, and it will
     # be returned at the end of this function.
     V = {min(v, F.inverse(v), key=lambda w: len(w))
-         for v in (freely_reduced(u) for u in U) if v != F.identity}
+         for v in (freely_reduced(u) for u in U) if v != F.identity()}
     found_half = True
     while found_half:
         found_half = False
@@ -322,7 +261,7 @@ def nielsen_reduced(F, U):
                     if len(v) < len(u_i):
                         found_shorter = True
                         V.remove(u_i)
-                        if v != F.identity:
+                        if v != F.identity():
                             V.add(min(v, F.inverse(v)))
         # Phase 3: find the shortest string u_j which can be decomposed into a
         # prefix and suffix of equal length which can be described by a
