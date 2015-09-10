@@ -131,7 +131,7 @@ def test_nielsen_reduced():
     a, b, e = (Word(c) for c in 'abe')
     F = FreeGroup({a, b, e}, e)
     # Source of this example:
-    # http://www-users.math.umd.edu/~rfhoban/Graph_Foldings/GraphFoldings.html
+    # http://www-users.math.umd.edu/~rfhoban/Graph_Foldings/GraphFoldings.html.gz
     #U = {a + a + a + b, F.inverse(a) + b + a + b, a + a + F.inverse(b) + a}
     #V = nielsen_reduced(F, U)
     #assert equals(V, U)
